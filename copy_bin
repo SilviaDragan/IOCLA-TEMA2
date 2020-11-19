@@ -1,0 +1,268 @@
+%include "io.mac"
+
+section .data
+    contor1 db 0
+    contor2 db 0
+    contor3 db 0
+    len db 0
+    string1 db "start", 0
+    string2 db "lastbits", 0
+    power2 db 0
+    result db 0
+    hexlen db 0
+    remain db 0
+
+section .text
+    global bin_to_hex
+    extern printf
+
+bin_to_hex:
+    ;; DO NOT MODIFY
+    push    ebp
+    mov     ebp, esp
+    pusha
+
+    mov     edx, [ebp + 8]      ; hexa_value
+    mov     esi, [ebp + 12]     ; bin_sequence
+    mov     ecx, [ebp + 16]     ; length
+    ;; DO NOT MODIFY
+
+    ;; TODO: Implement bin to hex
+
+;cred ca o sa fac un loop care merge din 4 in 4 pana cand iese numarul din range 
+
+    xor eax, eax
+    xor ebx, ebx
+    mov [len], cl
+    mov [contor1], cl
+    mov al, 0
+    mov [power2], al
+    xor ecx, ecx
+
+    mov al, byte [len]
+    mov bl, 4
+    div bl
+    cmp ah, 0
+    jg add1
+    je dont
+add1:
+    add al, 1
+dont:
+    mov [hexlen], al
+    ;PRINTF32 `cheie :%hhu\n\x0`, eax
+    mov [remain], ah
+    xor eax, eax
+    mov al, [remain]
+    PRINTF32 `REST: %u\n\x0`, eax
+    xor eax, eax
+    mov al, byte [contor2]
+
+
+start:
+
+    xor eax, eax
+    mov cl, [contor1]
+    mov [contor2], al
+    mov al, 1
+    mov [power2], al
+    mov al, 0
+    PRINTF32 `%u\n\x0`, ecx
+    
+;asta e bine cred
+
+    ;cmp ecx, 4
+    ;jle last_bits
+
+    mov al, byte [len]
+    cmp ecx, eax
+    jne process_result
+    je first
+    
+
+process_result:
+    xor ebx, ebx
+    xor eax, eax
+    mov al, byte [result]
+    ;PRINTF32 `result: %u\n\x0`, eax
+    cmp eax, 10
+    jge letter
+    jl not_letter
+letter:
+    add eax, 55
+    PRINTF32 `result: %u\n\x0`, eax
+    mov [result], al
+    jmp after
+not_letter:
+    PRINTF32 `result: %u\n\x0`, eax
+    mov bl, byte [hexlen]
+   ; PRINTF32 `poz :%u \x0`, ebx
+   ; PRINTF32 `rez :%hhu\n\x0`, eax
+    mov [edx + ebx], eax
+    sub ebx, 1
+    mov [hexlen], bl
+    xor ebx, ebx
+   
+after:
+    mov cl, [contor1]
+    cmp ecx, 0
+    jle exit
+
+first:
+    xor eax, eax
+    mov al, 0
+    mov [result], al
+    xor eax, eax
+    jmp four_section
+
+four_section:
+    cmp ecx, 4
+    jl last_bits
+    mov eax, ecx
+    mov bl, byte [contor2]
+    ;PRINTF32 `c2: %u\x0`, ebx
+    
+    cmp ebx, 0   
+    je dont_multiply
+    jg multiply
+    
+dont_multiply:
+    ;mov al, [power2]
+    sub eax, ebx
+    xor ebx, ebx
+    mov bl, byte [esi + eax -1]
+    sub ebx, 48
+    ;PRINTF32 `dont_bit: %u\n\x0`, ebx
+    cmp ebx, 0
+    je zero
+    jne one
+
+multiply:
+    sub eax, ebx
+    ;PRINTF32 ` eax: %u\n\x0`, eax
+    xor ebx, ebx
+    mov bl, byte [esi + eax -1]
+    sub ebx, 48
+    ;PRINTF32 `bit: %u\n\x0`, ebx
+
+    xor eax, eax
+    mov al, byte [power2]
+    shl eax, 1
+    mov [power2], al
+
+    cmp ebx, 0
+    je zero
+    jne one
+one:
+    xor ebx, ebx
+    mov bl, byte [result]
+    mov al, byte [power2]
+    add ebx, eax
+    ;PRINTF32 `res: %u\n\x0`, ebx
+    mov [result], bl
+
+zero:
+    ;PRINTF32 `pow: %u\n\x0`, eax
+    xor ebx, ebx
+    mov bl, [contor2]
+    add ebx, 1
+    mov [contor2], bl
+    cmp ebx, 4
+    jl four_section
+    xor ecx, ecx
+    mov cl, byte [contor1]
+    cmp ecx, 4
+    jl last_bits
+    sub ecx, 4
+    cmp ecx, 0
+    je exit
+    mov [contor1], cl
+    jmp start
+
+last_bits:
+    PRINTF32 `%s\n\x0`, string2
+    mov eax, ecx
+    mov bl, byte [contor2]
+
+    cmp ebx, 0   
+    je last_dont_multiply
+    jg last_multiply
+    
+last_dont_multiply:
+    ;mov al, [power2]
+    sub eax, ebx
+    xor ebx, ebx
+    mov bl, byte [esi + eax -1]
+    sub ebx, 48
+    PRINTF32 `dont_bit: %u\n\x0`, ebx
+    cmp ebx, 0
+    je zero_last
+    jne one_last
+
+last_multiply:
+    sub eax, ebx
+    PRINTF32 ` eax: %u\n\x0`, eax
+    xor ebx, ebx
+    mov bl, byte [esi + eax -1]
+    sub ebx, 48
+    PRINTF32 `bit: %u\n\x0`, ebx
+    xor eax, eax
+    mov al, byte [power2]
+    shl eax, 1
+    mov [power2], al
+
+    cmp ebx, 0
+    je zero_last
+    jne one_last
+
+one_last:
+    xor ebx, ebx
+    mov bl, byte [result]
+    mov al, byte [power2]
+    add ebx, eax
+    mov [result], bl
+zero_last:
+    xor ebx, ebx
+    mov bl, [contor2]
+    add ebx, 1
+    mov [contor2], bl
+    xor ecx, ecx
+    mov cl, byte [contor1]
+    sub ecx, 1
+    mov [contor1], cl
+    xor ecx, ecx
+    mov cl, byte [remain]
+    PRINTF32 `REST: %u\n\x0`, ecx
+    sub ecx, 1
+    mov [remain], cl
+    cmp ecx, 1
+    jg last_bits
+    jmp proces_final
+
+proces_final:
+    xor ebx, ebx
+    xor eax, eax
+    mov al, byte [result]
+    ;PRINTF32 `result: %u\n\x0`, eax
+    cmp eax, 10
+    jge final_letter
+    jl final_not_letter
+final_letter:
+    add eax, 55
+    PRINTF32 `result: %u\n\x0`, eax
+    mov [result], al
+    jmp exit
+final_not_letter:
+    PRINTF32 `result: %u\n\x0`, eax
+    mov bl, byte [hexlen]
+   ; PRINTF32 `poz :%u \x0`, ebx
+   ; PRINTF32 `rez :%hhu\n\x0`, eax
+    mov [edx + ebx], eax
+    sub ebx, 1
+    mov [hexlen], bl
+    xor ebx, ebx
+exit:
+    ;; DO NOT MODIFY
+    popa
+    leave
+    ret
+    ;; DO NOT MODIFY
